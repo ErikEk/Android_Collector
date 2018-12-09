@@ -13,6 +13,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import java.util.Timer;
+
 import com.crrepa.ble.CRPBleClient;
 import com.crrepa.ble.conn.CRPBleConnection;
 import com.crrepa.ble.conn.CRPBleDevice;
@@ -71,6 +73,7 @@ import com.example.erik.counter.SampleApplication;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.TimerTask;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -89,6 +92,7 @@ public class DeviceActivity extends AppCompatActivity {
     CRPBleDevice mBleDevice;
     CRPBleConnection mBleConnection;
     boolean isUpgrade = false;
+
 
     @BindView(R.id.tv_connect_state)
     TextView tvConnectState;
@@ -121,7 +125,26 @@ public class DeviceActivity extends AppCompatActivity {
     @BindView(R.id.tv_new_firmware_version)
     TextView tvNewFirmwareVersion;
 
+    Timer timer;
+
     private String bandFirmwareVersion;
+
+    public void CrunchifyTimerTaskExample(int seconds) {
+        //toolkit = Toolkit.getDefaultToolkit();
+        timer = new Timer();
+        timer.schedule(new CrunchifyReminder(), 0, // initial delay
+                seconds * 1000); // subsequent rate
+    }
+
+    class CrunchifyReminder extends TimerTask {
+        public void run() {
+            System.out.format("Timer Task Finished..!%n");
+            Log.d("Measure:", "Measure heart rate...");
+            mBleConnection.startMeasureOnceHeartRate();
+            Log.d("Measure:", "Measure heart rate...");
+            //timer.cancel(); // Terminate the timer thread
+        }
+    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -145,6 +168,8 @@ public class DeviceActivity extends AppCompatActivity {
         if (mBleDevice != null && !mBleDevice.isConnected()) {
             connect();
         }
+
+        CrunchifyTimerTaskExample(5);
     }
 
     @Override
@@ -474,6 +499,8 @@ public class DeviceActivity extends AppCompatActivity {
                 });
                 break;
             case R.id.btn_send_sedentary_reminder:
+
+                // REMVOED
                 mBleConnection.sendSedentaryReminder(true);
                 break;
             case R.id.btn_query_sedentary_reminder:
