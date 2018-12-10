@@ -52,6 +52,7 @@ import com.crrepa.ble.conn.listener.CRPBleFirmwareUpgradeListener;
 import com.crrepa.ble.conn.listener.CRPBloodOxygenChangeListener;
 import com.crrepa.ble.conn.listener.CRPBloodPressureChangeListener;
 import com.crrepa.ble.conn.listener.CRPHeartRateChangeListener;
+import com.crrepa.ble.conn.listener.CRPBleHeartRateChangeListener;
 import com.crrepa.ble.conn.listener.CRPPhoneOperationListener;
 import com.crrepa.ble.conn.listener.CRPSleepChangeListener;
 import com.crrepa.ble.conn.listener.CRPStepChangeListener;
@@ -563,6 +564,7 @@ public class DeviceActivity extends AppCompatActivity {
                 Log.d("Stop rate - ", "btn_stop_measure_heart_rate");
                 break;
             case R.id.btn_sync_last_heart_rate:
+                testSet();
                 mBleConnection.queryLastDynamicRate();
                 Log.d("query - ", "btn_sync_last_heart_rate");
                 //mBleConnection.queryMovementHeartRate();
@@ -574,7 +576,9 @@ public class DeviceActivity extends AppCompatActivity {
                 mBleConnection.closeTimingMeasureHeartRate();
                 break;
             case R.id.btn_query_today_hreat_rate:
-                mBleConnection.queryTodayHeartRate(CRPHeartRateType.ALL_DAY_HEART_RATE);
+
+                //mBleConnection.queryTodayHeartRate(CRPHeartRateType.ALL_DAY_HEART_RATE);
+                mBleConnection.queryTodayHeartRate(CRPHeartRateType.TIMING_MEASURE_HEART_RATE);
                 break;
             case R.id.btn_query_yesterday_hreat_rate:
                 mBleConnection.queryPastHeartRate();
@@ -698,7 +702,45 @@ public class DeviceActivity extends AppCompatActivity {
             Log.d(TAG, "onPastSleepChange: " + info.getTotalTime());
         }
     };
+    CRPBleHeartRateChangeListener mBleHeartRateChangeListener new CRPBleHeartRateChangeListener() {
+        @Override
+        public void onMeasuring(int rate) {
+            Log.d(TAG, "onMeasuring: " + rate);
+            //updateTextView(tvHeartRate, String.format(getString(R.string.heart_rate), rate));
+        }
 
+        @Override
+        public void onOnceMeasureComplete(int rate) {
+            Log.d(TAG, "onOnceMeasureComplete: " + rate);
+            updateHeartInfo(rate);
+        }
+
+        @Override
+        public void onMeasureComplete(CRPHeartRateInfo info) {
+            Log.d(TAG, "running onMeasureComplete");
+            if (info != null && info.getMeasureData() != null) {
+                for (Integer integer : info.getMeasureData()) {
+                    Log.d(TAG, "onMeasureComplete: " + integer);
+                }
+            }
+        }
+
+        @Override
+        public void on24HourMeasureResult(CRPHeartRateInfo info) {
+            List<Integer> data = info.getMeasureData();
+            Log.d(TAG, "on24HourMeasureResult: " + data.size());
+        }
+
+        @Override
+        public void onMovementMeasureResult(List<CRPMovementHeartRateInfo> list) {
+            Log.d(TAG, "Running onMovementMeasureResult");
+            for (CRPMovementHeartRateInfo info : list) {
+                if (info != null) {
+                    Log.d(TAG, "onMovementMeasureResult: " + info.getStartTime());
+                }
+            }
+        }
+    }
     CRPHeartRateChangeListener mHeartRateChangListener = new CRPHeartRateChangeListener() {
         @Override
         public void onMeasuring(int rate) {
