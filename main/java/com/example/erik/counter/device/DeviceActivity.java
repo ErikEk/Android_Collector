@@ -46,6 +46,7 @@ import com.crrepa.ble.conn.callback.CRPDeviceTimeSystemCallback;
 import com.crrepa.ble.conn.callback.CRPDeviceVersionCallback;
 import com.crrepa.ble.conn.callback.CRPDeviceWatchFaceLayoutCallback;
 import com.crrepa.ble.conn.callback.CRPDeviceWatchFacesCallback;
+import com.crrepa.ble.conn.callback.CRPDeviceTimingMeasureHeartRateCallback;
 import com.crrepa.ble.conn.listener.CRPBleConnectionStateListener;
 import com.crrepa.ble.conn.listener.CRPBleFirmwareUpgradeListener;
 import com.crrepa.ble.conn.listener.CRPBloodOxygenChangeListener;
@@ -84,7 +85,7 @@ import butterknife.OnClick;
  */
 
 public class DeviceActivity extends AppCompatActivity {
-    private static final String TAG = "DeviceActivity";
+    private static final String TAG = "DeviceeActivity";
     public static final String DEVICE_MACADDR = "device_macaddr";//"F8:54:E7:5D:B8:12";//device_macaddr"; // "3C:F7:A4:1F:08:1B"
 
     ProgressDialog mProgressDialog;
@@ -126,6 +127,7 @@ public class DeviceActivity extends AppCompatActivity {
     TextView tvNewFirmwareVersion;
 
     Timer timer;
+    boolean measure_flip = false;
 
     private String bandFirmwareVersion;
 
@@ -133,15 +135,25 @@ public class DeviceActivity extends AppCompatActivity {
         //toolkit = Toolkit.getDefaultToolkit();
         timer = new Timer();
         timer.schedule(new CrunchifyReminder(), 0, // initial delay
-                seconds * 1000); // subsequent rate
+                seconds * 100000); // subsequent rate
     }
 
     class CrunchifyReminder extends TimerTask {
         public void run() {
-            System.out.format("Timer Task Finished..!%n");
             Log.d("Measure:", "Measure heart rate...");
-            mBleConnection.startMeasureOnceHeartRate();
-            Log.d("Measure:", "Measure heart rate...");
+            //mBleConnection.startMeasureOnceHeartRate();
+            /*if (measure_flip == false) {
+                Log.d("Measure:", "Start");
+                mBleConnection.startMeasureDynamicRate();
+            }
+            else {
+                Log.d("Measure:", "Stop");
+                //mBleConnection.queryLastDynamicRate();
+                mBleConnection.stopMeasureDynamicRtae();
+            }
+            measure_flip = !measure_flip;
+
+            */
             //timer.cancel(); // Terminate the timer thread
         }
     }
@@ -169,7 +181,7 @@ public class DeviceActivity extends AppCompatActivity {
             connect();
         }
 
-        CrunchifyTimerTaskExample(5);
+        CrunchifyTimerTaskExample(15);
     }
 
     @Override
@@ -250,6 +262,8 @@ public class DeviceActivity extends AppCompatActivity {
             R.id.btn_send_other_message, R.id.btn_query_other_message,
             R.id.btn_send_sedentary_reminder, R.id.btn_query_sedentary_reminder,
             R.id.btn_send_watch_face, R.id.btn_query_watch_face,
+            R.id.btn_openTimingMeasureHeartRate, R.id.btn_closeTimingMeasureHeartRate,
+            R.id.btn_queryTimingMeasureHeartRate,
             R.id.btn_start_measure_heart_rate, R.id.btn_stop_measure_heart_rate,
             R.id.btn_send_device_version, R.id.btn_query_device_version,
             R.id.btn_start_measure_blood_pressure, R.id.btn_stop_measure_blood_pressure,
@@ -438,7 +452,7 @@ public class DeviceActivity extends AppCompatActivity {
                 mBleConnection.findDevice();
                 break;
             case R.id.btn_send_message:
-                mBleConnection.sendMessage("hello world!",
+                mBleConnection.sendMessage("Sleep Cure",
                         CRPBleMessageType.MESSAGE_PHONE, 100);
                 break;
             case R.id.btn_send_alarm_clock:
@@ -500,7 +514,6 @@ public class DeviceActivity extends AppCompatActivity {
                 break;
             case R.id.btn_send_sedentary_reminder:
 
-                // REMVOED
                 mBleConnection.sendSedentaryReminder(true);
                 break;
             case R.id.btn_query_sedentary_reminder:
@@ -522,18 +535,37 @@ public class DeviceActivity extends AppCompatActivity {
                     }
                 });
                 break;
+            case R.id.btn_openTimingMeasureHeartRate:
+                Log.d("OpenTiming - ", "btn_openTimingMeasureHeartRate");
+                mBleConnection.openTimingMeasureHeartRate(1);
+                break;
+            case R.id.btn_closeTimingMeasureHeartRate:
+                Log.d("CloseTiming - ", "btn_closeTimingMeasureHeartRate");
+                mBleConnection.closeTimingMeasureHeartRate();
+                break;
+            case R.id.btn_queryTimingMeasureHeartRate:
+                Log.d("QueryTiming - ", "btn_queryTimingMeasureHeartRate");
+                mBleConnection.queryTimingMeasureHeartRate(new CRPDeviceTimingMeasureHeartRateCallback() {
+                    @Override
+                    public void onTimingMeasure(boolean enable) {
+                        Log.d(TAG, "onTimingMeasure: " + enable);
+                    }
+                });
+                break;
             case R.id.btn_start_measure_heart_rate:
                 mBleConnection.startMeasureDynamicRate();
-                mBleConnection.startMeasureOnceHeartRate();
-                Log.e("Start rate:", "sadadas");
+                //mBleConnection.startMeasureOnceHeartRate();
+                Log.d("Start rate - ", "btn_start_measure_heart_rate");
                 break;
             case R.id.btn_stop_measure_heart_rate:
                 mBleConnection.stopMeasureDynamicRtae();
 //                mBleConnection.stopMeasureOnceHeartRate();
+                Log.d("Stop rate - ", "btn_stop_measure_heart_rate");
                 break;
             case R.id.btn_sync_last_heart_rate:
-//                mBleConnection.queryLastDynamicRate();
-                mBleConnection.queryMovementHeartRate();
+                mBleConnection.queryLastDynamicRate();
+                Log.d("query - ", "btn_sync_last_heart_rate");
+                //mBleConnection.queryMovementHeartRate();
                 break;
             case R.id.btn_open_24_hreat_rate:
                 mBleConnection.openTimingMeasureHeartRate(1);
@@ -548,6 +580,7 @@ public class DeviceActivity extends AppCompatActivity {
                 mBleConnection.queryPastHeartRate();
                 break;
             case R.id.btn_query_movement_hreat_rate:
+                Log.d("query - ", "btn_query_movement_hreat_rate");
                 mBleConnection.queryMovementHeartRate();
                 break;
             case R.id.btn_send_device_version:
@@ -569,9 +602,9 @@ public class DeviceActivity extends AppCompatActivity {
                 break;
             case R.id.btn_send_today_weather:
                 CRPTodayWeatherInfo todayWeatherInfo = new CRPTodayWeatherInfo();
-                todayWeatherInfo.setCity("深圳");
+                todayWeatherInfo.setCity("New york");
                 todayWeatherInfo.setFestival("");
-                todayWeatherInfo.setLunar("六月十四");
+                todayWeatherInfo.setLunar(""); // 六月十四
                 todayWeatherInfo.setPm25(14);
                 todayWeatherInfo.setTemp(27);
                 todayWeatherInfo.setWeatherId(CRPWeatherId.CLOUDY);
@@ -670,7 +703,7 @@ public class DeviceActivity extends AppCompatActivity {
         @Override
         public void onMeasuring(int rate) {
             Log.d(TAG, "onMeasuring: " + rate);
-            updateTextView(tvHeartRate, String.format(getString(R.string.heart_rate), rate));
+            //updateTextView(tvHeartRate, String.format(getString(R.string.heart_rate), rate));
         }
 
         @Override
@@ -681,6 +714,7 @@ public class DeviceActivity extends AppCompatActivity {
 
         @Override
         public void onMeasureComplete(CRPHeartRateInfo info) {
+            Log.d(TAG, "running onMeasureComplete");
             if (info != null && info.getMeasureData() != null) {
                 for (Integer integer : info.getMeasureData()) {
                     Log.d(TAG, "onMeasureComplete: " + integer);
@@ -696,6 +730,7 @@ public class DeviceActivity extends AppCompatActivity {
 
         @Override
         public void onMovementMeasureResult(List<CRPMovementHeartRateInfo> list) {
+            Log.d(TAG, "Running onMovementMeasureResult");
             for (CRPMovementHeartRateInfo info : list) {
                 if (info != null) {
                     Log.d(TAG, "onMovementMeasureResult: " + info.getStartTime());
@@ -785,7 +820,7 @@ public class DeviceActivity extends AppCompatActivity {
     }
 
     void updateHeartInfo(int rate) {
-        Log.e("updateHeartInfo", "sdada");
+        Log.e("updateHeartInfo", String.format("Heart rate:%d", rate));
         //updateTextView(tvHeart, String.format(getString(R.string.heart), rate));
         updateTextView(tvHeart, String.format("Heart rate:%d", rate));
     }
